@@ -118,7 +118,7 @@ def generate_feedback_with_graphrag_llm(attempt_data, student_kt_state, course_c
     student_firstname = attempt_data.get('studentfirstname', 'Student') 
 
     # Construct the start of the feedback string using the student's first name
-    new_feedback_start = f"Great effort, {student_firstname}, on the quiz '{quiz_name}' (attempt {attempt_id})!"
+    new_feedback_start = f"Great effort, {student_firstname}, on the quiz!"
     
     concepts_mastered = student_kt_state.get('concepts_mastered', [])
     concepts_struggling = student_kt_state.get('concepts_struggling', [])
