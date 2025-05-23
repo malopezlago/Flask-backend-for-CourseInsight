@@ -112,13 +112,27 @@ def generate_feedback_with_graphrag_llm(attempt_data, student_kt_state, course_c
     #    feedback_text = llm_response.text
 
     # Dummy feedback
-    feedback_text = (
-        f"Great effort on your attempt (ID: {attempt_data.get('attemptid')})! "
-        f"It seems you're doing well with {student_kt_state.get('concepts_mastered', [])} "
-        f"but might need to review {student_kt_state.get('concepts_struggling', [])}. "
-        "Consider revisiting chapter X or practice problem Y. Keep up the good work!"
-    )
+    attempt_id = attempt_data.get('attemptid')
+    quiz_name = attempt_data.get('quizname', f"Quiz (ID: {attempt_data.get('quizid')})") # Get quizname, with a fallback
+
+    # Example of how you might modify the feedback string generation:
+    # old_feedback_start = f"Great effort on your attempt (ID: {attempt_id})!"
+    new_feedback_start = f"Great effort on the quiz '{quiz_name}' (attempt {attempt_id})!"
     
+    # Example:
+    concepts_mastered = student_kt_state.get('concepts_mastered', [])
+    concepts_struggling = student_kt_state.get('concepts_struggling', [])
+
+    feedback_parts = [new_feedback_start]
+    if concepts_mastered:
+        feedback_parts.append(f"It seems you're doing well with {concepts_mastered}.")
+    if concepts_struggling:
+        feedback_parts.append(f"You might need to review {concepts_struggling}.")
+    
+    # Add generic advice or more specific advice based on GraphRAG
+    feedback_parts.append("Consider revisiting relevant materials or practice problems. Keep up the good work!")
+    
+    feedback_text = " ".join(feedback_parts)
     logger.info(f"Generated feedback: {feedback_text}")
     return feedback_text
 
