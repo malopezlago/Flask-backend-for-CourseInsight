@@ -67,13 +67,18 @@ def generate_feedback():
         attempt_id = data.get('attemptid')
         user_id = data.get('userid')
         course_id = data.get('courseid')
-        # quiz_id = data.get('quizid') # Available if needed
+        quiz_id = data.get('quizid') # Available if needed
+        quiz_name = data.get('quizname') # <<< Get the quiz name
         responses = data.get('responses', []) # Student's answers in the current attempt
         history = data.get('history', []) # Broader interaction history
-        content_views = data.get('contentviews', []) # Log data of content views
+        content_views = data.get('contentviews', 0) # Log data of content views, default to 0 if not present
 
-        if not all([attempt_id, user_id, course_id]):
-            return jsonify({"status": "error", "message": "Missing required fields: attemptid, userid, or courseid"}), 400
+        # Ensure quiz_name has a default if not provided, though Moodle should always send it now
+        if quiz_name is None:
+            quiz_name = f"Quiz (ID: {quiz_id})" # Fallback if quizname is somehow missing
+
+        if not all([attempt_id, user_id, course_id, quiz_id]): # quiz_id is also important context
+            return jsonify({"status": "error", "message": "Missing required fields: attemptid, userid, courseid, or quizid"}), 400
 
         # 1. Perform Knowledge Tracing
         student_kt_state = trace_student_knowledge(user_id, course_id, responses, history, content_views)
@@ -84,6 +89,19 @@ def generate_feedback():
         course_context_for_llm = {"course_id": course_id} # Add more course-specific details if needed
 
         # 3. Generate feedback using GraphRAG and LLM
+        # Pass the original 'data' (which now includes quizname) or pass quiz_name explicitly
+        # Let's assume generate_feedback_with_graphrag_llm can now accept quiz_name
+        # or can extract it from the 'data' dict if you prefer to pass the whole dict.
+        # For clarity, let's assume it's better to pass it explicitly if the function signature is updated.
+        # If generate_feedback_with_graphrag_llm expects the whole 'data' dict, it can pick 'quizname' from there.
+        
+        # Option A: Pass quiz_name explicitly (requires updating generate_feedback_with_graphrag_llm signature)
+        # feedback_text = generate_feedback_with_graphrag_llm(data, student_kt_state, course_context_for_llm, quiz_name)
+
+        # Option B: Pass the whole 'data' object, and let generate_feedback_with_graphrag_llm extract 'quizname'
+        # This is simpler if you don't want to change the function signature immediately,
+        # assuming generate_feedback_with_graphrag_llm is designed to look for 'quizname' in its first 'data' argument.
+        # The 'data' dictionary already contains 'quizname' because Moodle now sends it.
         feedback_text = generate_feedback_with_graphrag_llm(data, student_kt_state, course_context_for_llm)
         
         return jsonify({
